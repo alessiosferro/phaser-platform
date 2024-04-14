@@ -54,7 +54,8 @@ export class Game extends Phaser.Scene {
     }
 
     drawScore() {
-        this.scoreText = this.add.text(960, 32, "0", { fontSize: 36, fontFamily: 'Tahoma, sans-serif', color: 'gold' })
+        this.scoreText = this.add.text(1000, 24, "0", { fontSize: 36, fontFamily: 'Tahoma, sans-serif', color: 'gold' })
+            .setOrigin(1, 0)
     }
 
     isPlayerJumping() {
@@ -65,6 +66,7 @@ export class Game extends Phaser.Scene {
         this.bombs = this.physics.add.group();
         this.physics.add.collider(this.bombs, this.platforms);
         this.physics.add.overlap(this.bombs, this.player, this.hitBomb, undefined, this);
+        this.physics.add.collider(this.bombs, this.bombs);
     }
 
     hitBomb() {
@@ -74,6 +76,31 @@ export class Game extends Phaser.Scene {
         this.player.anims.play('turn');
 
         this.isGameOver = true;
+
+        this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
+            if (e.code !== 'Enter') return;
+
+            this.input.keyboard?.off('keydown')
+
+            this.physics.resume();
+            this.isGameOver = false;
+            this.player.clearTint();
+            this.player.setPosition(512, 600);
+
+            this.score = 0;
+            this.scoreText.setText(`0`);
+
+            this.bombs.children.each((child) => {
+                this.bombs.remove(child, true, true );
+                return true;
+            });
+
+            this.stars.children.iterate((child: any) => {
+                const sprite = child as Phaser.Physics.Arcade.Sprite;
+                sprite.enableBody(true, child.x, 16, true, true);
+                return true;
+            })
+        });
     }
 
     drawStars() {
@@ -106,7 +133,6 @@ export class Game extends Phaser.Scene {
 
         if (this.areAllStarsCollected()) {
             this.resetStars();
-
 
             if ('x' in player) {
                 const x = player.x < 512 ?
